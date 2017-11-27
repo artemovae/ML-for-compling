@@ -16,12 +16,12 @@ import scipy.cluster.hierarchy as hac
 import matplotlib.pyplot as plt
 
 
-def execute_pipeline(data_model):
+def execute_pipeline(data_model, alg):
     pipeline = Pipeline([
         ('tfidf', TfidfTransformer()),
         ('svd', TruncatedSVD(n_components=150)),
         ('norm', Normalizer()),
-        ('clust', AgglomerativeClustering(n_clusters=28))
+        ('clust', alg(n_clusters=28))
     ])
     pipeline.fit(data_model)
     return pipeline
@@ -44,7 +44,7 @@ def print_eval_metrics(pipeline, raw_news_filepath ='raw_news.csv'):
     print("V-measure",  v_measure_score(labels, clust_labels))
     print("Adjusted Rand-Index:",  adjusted_rand_score(labels, clust_labels))
     #print(confusion_matrix(labels, clust_labels))
-    plotClusters(data_model)
+    #plotClusters(data_model)
 
 
 def plotClusters(a):
@@ -53,10 +53,13 @@ def plotClusters(a):
     plt.tight_layout()
     plt.show()
 
-
-for filename in glob.iglob(path.join(path.dirname(__file__),'vectors_from_*.pickle'), recursive=True):
+list_of_alg = [KMeans, AgglomerativeClustering, SpectralClustering]
+for filename in glob.iglob('vectors_d4v__from_*.pickle', recursive=True):
     with open(filename, 'rb') as f:
         data_model = pickle.load(f)
-        pipeline = execute_pipeline(data_model)
-        svd_varience(pipeline)
-        print_eval_metrics(pipeline)
+        for alg in list_of_alg:
+            print(alg, filename.replace('vectors_d4v__from', ''))
+            pipeline = execute_pipeline(data_model, alg)
+            svd_varience(pipeline)
+            print_eval_metrics(pipeline)
+            print('==============')
